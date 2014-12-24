@@ -1,25 +1,61 @@
+// µShell (microShell, uShell, ush).  An experimental Unix shell implementation
+// written in C++.
+//
+// Author: Andrei Barsan
+// Project started in December 2014.
+// License: TBD (will be free)
+
+// C++
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 
+// C includes
 #include <cstdlib>
 #include <cstring>
 
+// Linux-specific
+#include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-/*
- * Ideas and such:
- *  - everything should have a proper interface and a dedicated implementation;
+/* Ideas and TODOS
+ * ---------------
+ *  - everything should have a proper interface and a dedicated implementation
  *  - make sure that code handling shell debug traps, pipes, variable handling etc.
- *  is as clean as possible;
- * */
+ *  is as clean as possible
+ *  - yacc should work to generate the grammar like in the regular Bash
+ *  - always bear in mind that plugins will have to be able to change anything
+ *  - consider blogging about progress
+ *  - document self about all variants of redirection in Bash and ensure that they
+ *    are all supported
+ *  - possible milestones:
+ *    - manual (limited) redirection support (i.e. look for >foo >>foo tokens)
+ *    - simple job control
+ *      - async tasks (&)
+ *      - jobs
+ *      - bg
+ *      - fg
+ *      - wait
+ *      - disown
+ *      - suspend
+ *      - kill
+ *      - killall
+ *      - etc. (http://tldp.org/LDP/abs/html/x9644.html)
+ *    - pipelines:
+ *      - as above (`foo & bar`)
+ *      - `foo; bar` (no pipes established)
+ *      - `foo | bar`
+ *      - mixed (`foo; bar | baz`)
+ *    - figure out streamlined way to perform e2e testing
+ */
 
 namespace microshell {
 
 namespace util {
+
   std::vector<std::string> &split(const std::string &s,
                                   char delim,
                                   std::vector<std::string> &elems) {
@@ -28,6 +64,12 @@ namespace util {
     while (std::getline(ss, item, delim)) {
       elems.push_back(item);
     }
+    return elems;
+  }
+
+  std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    split(s, delim, elems);
     return elems;
   }
 
@@ -51,7 +93,7 @@ namespace util {
    * arrays.  The caller takes ownership of the array. */
   char** get_raw_array(const std::vector<std::string>& v) {
     char** ret = new char*[v.size() + 1];
-    for(int i = 0; i < v.size(); ++i) {
+    for(size_t i = 0; i < v.size(); ++i) {
       ret[i] = strdup(v[i].c_str());
     }
     ret[v.size()] = nullptr;
@@ -66,6 +108,7 @@ using namespace std;
 
 class Command {
   public:
+    virtual ~Command() { }
     virtual int invoke() = 0;
 };
 
@@ -96,9 +139,8 @@ public:
       this->handle_child();
       // No return, the child will just 'exec' or 'exit' (on error).
     }
-    else {
-      return this->handle_parent(child_pid);
-    }
+
+    return this->handle_parent(child_pid);
   }
 
 private:
@@ -148,15 +190,34 @@ public:
     auto input = &cin;
     auto output = &cout;
 
+    string path = getenv("PATH");
+    auto dirs = microshell::util::split(path, ':');
+    cout << "Detected PATH:" << endl;
+    for(const string &dir : dirs) {
+      cout << dir << endl;
+    }
+
     while (!exit_requested) {
       output_prompt(*output);
       string command_text = read_command(*input);
       if(0 == command_text.length()) {
         continue;
       }
-      unique_ptr<Command> command(parse_command(command_text));
-      interpret_command(*command);
+
+      Command *command;
+      string *error;
+      if(parse_command(command_text, &command, &error)) {
+        interpret_command(*command);
+      }
+      else {
+        cout << error << endl;
+      }
+
+      delete command;
+      delete error;
     }
+
+    return 0;
   } 
 
 protected:
@@ -176,10 +237,14 @@ protected:
     return cmd.invoke();
   }
 
-  unique_ptr<Command> parse_command(const string& command_text) {
+  bool parse_command(const string& command_text,
+                                    Command **command,
+                                    string **error) {
     vector<string> argv;
     microshell::util::split(command_text, ' ', argv);
-    return unique_ptr<Command>(new DiskCommand(argv));
+    *command = new DiskCommand(argv);
+    *error = new string("");
+    return true;
   }
 
 private:
