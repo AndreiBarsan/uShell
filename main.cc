@@ -7,6 +7,7 @@
 
 // C++
 #include <iostream>
+#include <map>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -14,9 +15,12 @@
 
 // C includes
 #include <cstdlib>
+#include <cstdio>
 #include <cstring>
 
 // Linux-specific
+#include <readline/readline.h>
+#include <readline/history.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -51,8 +55,6 @@
  *      - mixed (`foo; bar | baz`)
  *    - figure out streamlined way to perform e2e testing
  */
-
-namespace microshell {
 
 namespace util {
 
@@ -102,6 +104,8 @@ namespace util {
 
 }  // namespace util
 
+namespace microshell {
+
 namespace core {
 
 using namespace std;
@@ -125,9 +129,7 @@ public:
 
   int invoke() {
     string comma_args = 
-      microshell::util::merge_with(argv.begin() + 1,
-                                   argv.end(),
-                                   ", ");
+      util::merge_with(argv.begin() + 1, argv.end(), ", ");
     cout << "Invoking program [" << argv[0] << "] with args ["
          << comma_args << "]" << endl;
     pid_t child_pid = fork();
@@ -157,7 +159,7 @@ private:
   }
 
   void handle_child() {
-    char **argv = microshell::util::get_raw_array(this->argv);
+    char **argv = util::get_raw_array(this->argv);
     // 'environ' is inherited from the parent.
     char **parent_env = environ;
     execve(argv[0], argv, parent_env);
@@ -176,7 +178,23 @@ private:
 };
 
 class BuiltinCommand : public SimpleCommand {
-  // TODO(ioan) Implement some basic builtin commands.
+public:
+  BuiltinCommand(const string& name) : name(name) { }
+  
+  string get_name() const {
+    return name;
+  }
+
+private:
+  const string name;
+};
+
+class ExitBuiltin : BuiltinCommand {
+  public:
+    int invoke() {
+      exit(0);
+      return -1;
+    }
 };
 
 class Shell {
@@ -191,7 +209,7 @@ public:
     auto output = &cout;
 
     string path = getenv("PATH");
-    auto dirs = microshell::util::split(path, ':');
+    auto dirs = util::split(path, ':');
     cout << "Detected PATH:" << endl;
     for(const string &dir : dirs) {
       cout << dir << endl;
@@ -205,7 +223,7 @@ public:
       }
 
       Command *command;
-      string *error;
+      string error;
       if(parse_command(command_text, &command, &error)) {
         interpret_command(*command);
       }
@@ -214,7 +232,6 @@ public:
       }
 
       delete command;
-      delete error;
     }
 
     return 0;
@@ -226,10 +243,9 @@ protected:
   }
 
   string read_command(istream& input) {
-    string command;
-    // This needs fine tuning.  We should keep peeking in case the 
-    // user types e.g. an arrow key and respond to that right away.
-    getline(input, command);
+    char* line = readline("");
+    string command(line);
+    free(line);
     return command;
   }
 
@@ -239,16 +255,44 @@ protected:
 
   bool parse_command(const string& command_text,
                                     Command **command,
-                                    string **error) {
+                                    string *error) {
     vector<string> argv;
-    microshell::util::split(command_text, ' ', argv);
-    *command = new DiskCommand(argv);
-    *error = new string("");
+    util::split(command_text, ' ', argv);
+    if(is_builtin(argv[0])) {
+      *command = get_builtin(argv);
+    }
+    else {
+      string full_path;
+      if(resolve_binary_name(argv[0], &full_path)) {
+        argv[0] = full_path;
+        *command = new DiskCommand(argv);
+      } else {
+        *error = "Command not found " + full_path;
+        return false;
+      }
+    }
+
+    *error = "";
     return true;
   }
 
+  bool resolve_binary_name(const string& name, string* full_path) {
+    *full_path = name + "foo";
+    return true;
+  }
+
+  bool is_builtin(const string& builtin_name) {
+    return 0 > builtin_table.count(builtin_name);
+  }
+
+  BuiltinCommand* get_builtin(const vector<string>& argv) {
+    return builtin_table[argv[0]];
+  }
+
 private:
-  bool exit_requested;  
+  bool exit_requested; 
+  map<string, BuiltinCommand*> builtin_table;
+  vector<string> path;
 };
 
 }  // namespace core
