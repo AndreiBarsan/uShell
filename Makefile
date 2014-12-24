@@ -4,5 +4,4 @@ all:
 	bin/main
 
 clean:
-	rm hello
-	rm main
+	rm -r bin/* 
