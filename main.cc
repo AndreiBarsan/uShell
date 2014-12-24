@@ -22,6 +22,8 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <signal.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -58,20 +60,25 @@
 
 namespace util {
 
-  std::vector<std::string> &split(const std::string &s,
-                                  char delim,
-                                  std::vector<std::string> &elems) {
+  // Shush, even Google does it like this.
+  // Yes, I know it can be done cleaner using varadic templates, but that
+  // requires gcc 4.9, which I don't have.
+
+  std::string merge_paths(const std::string& path) {
+    return path;
+  }
+
+  std::string merge_paths(const std::string& path1, const std::string& path2) {
+    return path1 + "/" + path2;
+  }
+
+  std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
     std::stringstream ss(s);
     std::string item;
     while (std::getline(ss, item, delim)) {
       elems.push_back(item);
     }
-    return elems;
-  }
-
-  std::vector<std::string> split(const std::string &s, char delim) {
-    std::vector<std::string> elems;
-    split(s, delim, elems);
     return elems;
   }
 
@@ -208,12 +215,8 @@ public:
     auto input = &cin;
     auto output = &cout;
 
-    string path = getenv("PATH");
-    auto dirs = util::split(path, ':');
-    cout << "Detected PATH:" << endl;
-    for(const string &dir : dirs) {
-      cout << dir << endl;
-    }
+    string envpath = getenv("PATH");
+    this->path = util::split(envpath, ':');
 
     while (!exit_requested) {
       output_prompt(*output);
@@ -222,7 +225,7 @@ public:
         continue;
       }
 
-      Command *command;
+      Command *command = nullptr;
       string error;
       if(parse_command(command_text, &command, &error)) {
         interpret_command(*command);
@@ -256,8 +259,7 @@ protected:
   bool parse_command(const string& command_text,
                                     Command **command,
                                     string *error) {
-    vector<string> argv;
-    util::split(command_text, ' ', argv);
+    vector<string> argv = util::split(command_text, ' ');
     if(is_builtin(argv[0])) {
       *command = get_builtin(argv);
     }
@@ -267,7 +269,7 @@ protected:
         argv[0] = full_path;
         *command = new DiskCommand(argv);
       } else {
-        *error = "Command not found " + full_path;
+        *error = "Command not found: [" + argv[0] + "]";
         return false;
       }
     }
@@ -277,8 +279,18 @@ protected:
   }
 
   bool resolve_binary_name(const string& name, string* full_path) {
-    *full_path = name + "foo";
-    return true;
+    // PLATFORM_SPECIFIC
+    struct stat stat_buf;
+    for(const string& p : path) {
+      cout << "Inspecting: " << p << endl;
+      string path = util::merge_paths(p, name);
+      if(0 == stat(path.c_str(), &stat_buf)) {
+        *full_path = path;
+        return true;
+      }
+    }
+
+    return false;
   }
 
   bool is_builtin(const string& builtin_name) {
