@@ -196,9 +196,11 @@ private:
   const string name;
 };
 
-class ExitBuiltin : BuiltinCommand {
+class ExitBuiltin : public BuiltinCommand {
   public:
+    ExitBuiltin() : BuiltinCommand("exit") { }
     int invoke() {
+      cout << "Bye!" << endl;
       exit(0);
       return -1;
     }
@@ -242,12 +244,16 @@ public:
 
 protected:
   void output_prompt(ostream& output) {
-    output << "ush >> ";
+    output << prompt;
   }
 
   string read_command(istream& input) {
+    // We have already output our prompt at this point.
     char* line = readline("");
     string command(line);
+    if(command.size() > 0) {
+      add_history(line);
+    }
     free(line);
     return command;
   }
@@ -294,7 +300,7 @@ protected:
   }
 
   bool is_builtin(const string& builtin_name) {
-    return 0 > builtin_table.count(builtin_name);
+    return builtin_table.end() != builtin_table.find(builtin_name);
   }
 
   BuiltinCommand* get_builtin(const vector<string>& argv) {
@@ -303,7 +309,12 @@ protected:
 
 private:
   bool exit_requested; 
-  map<string, BuiltinCommand*> builtin_table;
+  string prompt = "ush >> ";
+  map<string, BuiltinCommand*> builtin_table = {
+    { "exit", new ExitBuiltin() }
+  };
+
+  // The list of folders found inside the PATH environment variable.
   vector<string> path;
 };
 
