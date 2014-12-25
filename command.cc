@@ -16,7 +16,7 @@ namespace core {
 
 using namespace std;
 
-int DiskCommand::invoke(Shell *shell) {
+int DiskCommand::invoke(Shell *) {
   string comma_args = 
     util::merge_with(argv.begin() + 1, argv.end(), ", ");
   cout << "Invoking program [" << argv[0] << "] with args ["
@@ -30,7 +30,7 @@ int DiskCommand::invoke(Shell *shell) {
     this->handle_child();
     // No return, the child will just 'exec' or 'exit' (on error).
   }
-
+  
   return this->handle_parent(child_pid);
 }
   
@@ -60,6 +60,17 @@ void DiskCommand::fork_error(int error) {
   cerr << "Could not create a child to run the command. "
        << "OS says [" << strerror(error) << "]. errno = "
        << error << endl;
+}
+
+int ExitBuiltin::invoke(Shell *shell) {
+  cout << "Bye!" << endl;
+  exit(0);
+  return -1;
+}
+
+int PwdBuiltin::invoke(Shell *shell) {
+  cout << shell->get_working_directory() << endl;
+  return 0;
 }
 
 }  // namespace core

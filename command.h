@@ -55,26 +55,17 @@ private:
   const string name;
 };
 
-/*
 class ExitBuiltin : public BuiltinCommand {
   public:
     ExitBuiltin() : BuiltinCommand("exit") { }
-    int invoke(Shell *shell) {
-      cout << "Bye!" << endl;
-      exit(0);
-      return -1;
-    }
+    int invoke(Shell *shell);
 };
 
 class PwdBuiltin : public BuiltinCommand {
   public:
     PwdBuiltin() : BuiltinCommand("pwd") { }
-    int invoke(Shell *shell) {
-      cout << shell->get_working_directory() << endl;
-      return 0;
-    }
+    int invoke(Shell *shell);
 };
-*/
 
 }  // namespace core
 }  // namespace microshell

@@ -26,7 +26,11 @@ namespace core {
 
 using namespace std;
 
-Shell::Shell() {
+Shell::Shell() : builtin_table(
+    {
+      { "exit", new ExitBuiltin },
+      { "pwd", new PwdBuiltin },
+    }) {
   exit_requested = false;
   cout << "Welcome to microshell!" << endl;
   if(!util::getcwd(&this->working_directory)) {
@@ -37,7 +41,8 @@ Shell::Shell() {
 }
 
 int Shell::interactive() {
-  auto input = &cin;
+  // TODO(andrei) Use custom input stream somehow (might prevent libreadline from
+  // being used).
   auto output = &cout;
 
   string envpath = getenv("PATH");
@@ -45,7 +50,7 @@ int Shell::interactive() {
 
   while (!exit_requested) {
     output_prompt(*output);
-    string command_text = read_command(*input);
+    string command_text = read_command();
     if(0 == command_text.length()) {
       continue;
     }
@@ -65,11 +70,20 @@ int Shell::interactive() {
   return 0;
 } 
 
+string& Shell::get_working_directory() {
+  return working_directory;
+}
+
+string Shell::get_working_directory() const {
+  return working_directory;
+}
+
+
 void Shell::output_prompt(ostream& output) {
   output << prompt;
 }
 
-string Shell::read_command(istream& input) {
+string Shell::read_command() {
   // We have already output our prompt at this point.
   char* line = readline("");
   string command(line);

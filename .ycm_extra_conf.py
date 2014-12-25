@@ -23,6 +23,9 @@ flags = [
 
 SOURCE_EXTENSIONS = [ '.cpp', '.cxx', '.cc', '.c', '.m', '.mm' ]
 
+# Useful for a central flag provider.  Ain't nobody got time fo' that!
+database = None
+
 def DirectoryOfThisScript():
   return os.path.dirname( os.path.abspath( __file__ ) )
 

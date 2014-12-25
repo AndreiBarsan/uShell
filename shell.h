@@ -19,11 +19,13 @@ public:
   Shell();
 
   int interactive();
+  string& get_working_directory();
+  string get_working_directory() const;
 
 protected:
   void output_prompt(ostream& output);
 
-  string read_command(istream& input);
+  string read_command();
 
   int interpret_command(Command &cmd);
 
@@ -40,10 +42,7 @@ protected:
 private:
   bool exit_requested; 
   string prompt = "ush >> ";
-  map<string, BuiltinCommand*> builtin_table = {
-//    { "exit", new ExitBuiltin },
-//    { "pwd", new PwdBuiltin }
-  };
+  map<string, BuiltinCommand*> builtin_table;
 
   // The list of folders found inside the PATH environment variable.
   vector<string> path;
