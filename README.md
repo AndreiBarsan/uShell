@@ -1,7 +1,7 @@
 µShell
 ======
 
-Written for fun in C++ by **Andrei Barsan** ([siegedog.com](siegedog.com)).
+Written for fun in C++ by **Andrei Barsan** ([siegedog.com](http://siegedog.com)).
 
 License: TBD (will be free)
 
