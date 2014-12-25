@@ -52,6 +52,7 @@ int Shell::interactive() {
     output_prompt(*output);
     string command_text = read_command();
     if(0 == command_text.length()) {
+      cout << endl;
       continue;
     }
 
@@ -61,7 +62,7 @@ int Shell::interactive() {
       interpret_command(*command);
     }
     else {
-      cout << error << endl;
+      cerr << error << endl;
     }
 
     delete command;
@@ -86,6 +87,12 @@ void Shell::output_prompt(ostream& output) {
 string Shell::read_command() {
   // We have already output our prompt at this point.
   char* line = readline("");
+  
+  // This happens if e.g. the user enters an EOF character (C-D).
+  // Bash/zsh simply terminate in this case, even if they're interactive.
+  // Should we do the same?
+  if(!line) return "";
+
   string command(line);
   if(command.size() > 0) {
     add_history(line);
