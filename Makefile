@@ -1,7 +1,15 @@
+GPP=g++
+
+OPTS+='-std=c++11'
+OPTS+='-Wall'
+
 all:
-	g++ hello.cc -o bin/hello -std=c++11 -Wall
-	g++ main.cc -o bin/main -std=c++11 -Wall -lreadline
-	bin/main
+	mkdir -p bin/
+	$(GPP) hello.cc -o bin/hello $(OPTS)
+	$(GPP)  main.cc -o bin/ushell $(OPTS) -lreadline
+
+# Makes my life easier
+	bin/ushell
 
 clean:
 	rm -r bin/* 
