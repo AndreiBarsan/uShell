@@ -4,9 +4,16 @@
 
 #include <cstring>
 
+#include <linux/limits.h>
+#include <unistd.h>
+
 #include "util.h"
 
 namespace util {
+
+  bool is_absolute_path(const std::string& path) {
+    return path.length() > 0 && path[0] == '/';
+  }
 
   // TODO(andrei) Proper varadic function.
   std::string merge_paths(const std::string& path) {
@@ -48,6 +55,18 @@ namespace util {
     }
     ret[v.size()] = nullptr;
     return ret;
+  }
+
+  bool getcwd(std::string *cwd) {
+    // Note: PATH_MAX might not be sufficient.
+    // See: insanecoding.blogspot.com/2007/11/pathmax-simply-isnt.html
+    static char dir[PATH_MAX];
+    if(::getcwd(dir, sizeof(dir))) {
+      *cwd = std::string(dir);
+      return true;
+    }
+    
+    return false;
   }
 
 }  // namespace util
