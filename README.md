@@ -1,9 +1,11 @@
-µShell (microShell, uShell, ush).  An experimental Unix shell implementation.
-=============================================================================
+µShell
+======
 
-Written for fun in C++ by **Andrei Barsan** ([siegedog.com][siegedog.com]).
+Written for fun in C++ by **Andrei Barsan** ([siegedog.com](siegedog.com)).
 
 License: TBD (will be free)
+
+µShell is meant to be a simple, lightweight, clean, expandable, POSIX-compliant UNIX Shell implementation.
 
 Setup
 -----
