@@ -11,67 +11,77 @@
 #include "shell.h"
 #include "util.h"
 
+#define REGISTER_BUILTIN(TYPE, name) \
+  bool is_registered_##name = BuiltinRegistry::instance() \
+        ->register_factory<TYPE>(#name, new TypedBuiltinFactory< TYPE >);
+
 namespace microshell {
 namespace core {
 
 using namespace std;
 
-int DiskCommand::invoke(Shell *) {
+int DiskCommand::invoke(Shell *shell) {
   string comma_args = 
     util::merge_with(argv.begin() + 1, argv.end(), ", ");
-  cout << "Invoking program [" << argv[0] << "] with args ["
-       << comma_args << "]" << endl;
+  shell->out("Invoking program [" + argv[0] + "] with args [" +
+              comma_args + "]");
   pid_t child_pid = fork();
   if(-1 == child_pid) {
-    this->fork_error(errno);
+    // TODO(andrei) Shell::perror().
+    shell->eout("Could not crete a child to run the command. "
+                "OS says [" + string(strerror(errno)) + "]. errno = " +
+                to_string(errno));
     return -1;
   }
   else if(0 == child_pid) {
-    this->handle_child();
+    this->handle_child(shell);
     // No return, the child will just 'exec' or 'exit' (on error).
   }
   
-  return this->handle_parent(child_pid);
+  return this->handle_parent(shell, child_pid);
 }
   
-int DiskCommand::handle_parent(pid_t child_pid) {
-  cout << "Spawned child. Waiting for child to terminate." << endl;
+int DiskCommand::handle_parent(Shell *shell, pid_t child_pid) {
+  shell->out("Spawned child. Waiting for child to terminate.");
   int child_status;
   int waitpid_options = 0;
   waitpid(child_pid, &child_status, waitpid_options);
-  cout << "Child has terminated. Exit code: "
-       << child_status << endl;
+  shell->out("Child has terminated. Exit code: " + to_string(child_status));
   return child_status;
 }
 
-void DiskCommand::handle_child() {
+void DiskCommand::handle_child(Shell *shell) {
   char **argv = util::get_raw_array(this->argv);
   // 'environ' is inherited from the parent.
   char **parent_env = environ;
   execve(argv[0], argv, parent_env);
   // 'execve' doesn't return if it's successful.
-  cerr << "Failed to 'execve'. OS says ["
-       << strerror(errno) << "]. errno = " << errno << endl
-       << "Terminating child." << endl;
+  shell->eout("Failed to 'execve'. OS says [" + string(strerror(errno))
+               + "]. errno = " + to_string(errno));
+  shell->eout("Terminating child.");
   exit(-1);
 }
 
-void DiskCommand::fork_error(int error) {
-  cerr << "Could not create a child to run the command. "
-       << "OS says [" << strerror(error) << "]. errno = "
-       << error << endl;
-}
-
 int ExitBuiltin::invoke(Shell *shell) {
-  cout << "Bye!" << endl;
+  shell->out("Bye!");
   exit(0);
   return -1;
 }
+REGISTER_BUILTIN(ExitBuiltin, exit);
 
 int PwdBuiltin::invoke(Shell *shell) {
   cout << shell->get_working_directory() << endl;
   return 0;
 }
+REGISTER_BUILTIN(PwdBuiltin, pwd);
+
+int CdBuiltin::invoke(Shell *) {
+  return 0;
+}
+REGISTER_BUILTIN(CdBuiltin, cd);
+
+BuiltinRegistry* BuiltinRegistry::_instance = nullptr;
+
 
 }  // namespace core
 }  // namespace microshell

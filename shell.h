@@ -16,14 +16,17 @@ using namespace std;
 
 class Shell {
 public:
-  Shell();
+  Shell(const vector<string>& args);
 
   int interactive();
   string& get_working_directory();
   string get_working_directory() const;
 
+  const Shell* out(const string& message) const;
+  const Shell* eout(const string& message) const;
+
 protected:
-  void output_prompt(ostream& output);
+  void output_prompt();
 
   string read_command();
 
@@ -37,17 +40,23 @@ protected:
 
   bool is_builtin(const string& builtin_name);
 
-  BuiltinCommand* get_builtin(const vector<string>& argv);
-
+  BuiltinCommand* construct_builtin(const vector<string>& argv);
+  
 private:
   bool exit_requested; 
   string prompt = "ush >> ";
-  map<string, BuiltinCommand*> builtin_table;
 
   // The list of folders found inside the PATH environment variable.
   vector<string> path;
+
   // The current working directory of the shell.
   string working_directory;
+
+  // The streams used by the shell instance to output all text.
+  ostream& standard_output;
+  ostream& error_output;
+
+  string name;
 };
 
 }  // namespace core

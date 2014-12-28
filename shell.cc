@@ -26,30 +26,24 @@ namespace core {
 
 using namespace std;
 
-Shell::Shell() : builtin_table(
-    {
-      { "exit", new ExitBuiltin },
-      { "pwd", new PwdBuiltin },
-    }) {
+Shell::Shell(const vector<string> &) :
+    standard_output(cout),
+    error_output(cerr),
+    name("ush") {
   exit_requested = false;
   cout << "Welcome to microshell!" << endl;
   if(!util::getcwd(&this->working_directory)) {
-    cerr << "Failed to get the current working directory." << endl;
-    cerr << "Defaulting to `~'." << endl;
+    eout("Failed to get the current working directory.");
+    eout("Defaulting to `~'.");
     this->working_directory = "~";
   }
+  string envpath = getenv("PATH");
+  this->path = util::split(envpath, ':');
 }
 
 int Shell::interactive() {
-  // TODO(andrei) Use custom input stream somehow (might prevent libreadline from
-  // being used).
-  auto output = &cout;
-
-  string envpath = getenv("PATH");
-  this->path = util::split(envpath, ':');
-
   while (!exit_requested) {
-    output_prompt(*output);
+    output_prompt();
     string command_text = read_command();
     if(0 == command_text.length()) {
       cout << endl;
@@ -62,7 +56,7 @@ int Shell::interactive() {
       interpret_command(*command);
     }
     else {
-      cerr << error << endl;
+      eout(error);
     }
 
     delete command;
@@ -79,9 +73,18 @@ string Shell::get_working_directory() const {
   return working_directory;
 }
 
+const Shell* Shell::out(const string& message) const {
+  this->standard_output << this->name << ": " << message << endl;
+  return this;
+}
 
-void Shell::output_prompt(ostream& output) {
-  output << prompt;
+const Shell* Shell::eout(const string& message) const {
+  this->error_output << this->name << ": " << message << endl;
+  return this;
+}
+
+void Shell::output_prompt() {
+  this->standard_output << this->prompt;
 }
 
 string Shell::read_command() {
@@ -115,7 +118,7 @@ bool Shell::parse_command(const string& command_text,
   // TODO(andrei) Dollar(-brace) expand here.
 
   if(is_builtin(argv[0])) {
-    *command = get_builtin(argv);
+    *command = construct_builtin(argv);
   }
   else {
     string full_path;
@@ -163,11 +166,11 @@ bool Shell::resolve_binary_name(const string& name, string* full_path) {
 }
 
 bool Shell::is_builtin(const string& builtin_name) {
-  return builtin_table.end() != builtin_table.find(builtin_name);
+  return BuiltinRegistry::instance()->is_registered(builtin_name);
 }
 
-BuiltinCommand* Shell::get_builtin(const vector<string>& argv) {
-  return builtin_table[argv[0]];
+BuiltinCommand* Shell::construct_builtin(const vector<string>& argv) {
+  return BuiltinRegistry::instance()->build(argv);
 }
 
 }  // namespace core

@@ -11,6 +11,16 @@
 
 namespace util {
 
+  using namespace std;
+
+  vector<string> argv_to_strvec(int count, char** const argv) {
+    vector<string> vargv;
+    for(int i = 0; i < count; ++i) {
+      vargv.emplace_back(argv[i]);
+    }
+    return vargv;
+  }
+
   bool is_absolute_path(const std::string& path) {
     return path.length() > 0 && path[0] == '/';
   }

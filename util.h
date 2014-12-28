@@ -5,6 +5,8 @@
 #include <vector>
 
 namespace util {
+  std::vector<std::string> argv_to_strvec(int count, char** argv);
+
   bool is_absolute_path(const std::string& path);
 
   std::string merge_paths(const std::string& path);
@@ -17,10 +19,10 @@ namespace util {
                          const std::vector<std::string>::iterator& end,
                          const std::string delimitator);
 
-  /* ``Unwraps'' the vector `v', exposing a plain `char**' containing
-   * the raw data from `v'.  Null terminates the result as well,
-   * since many functions such as `execve' expect null-terminated
-   * arrays.  The caller takes ownership of the array. */
+  // ``Unwraps'' the vector `v', exposing a plain `char**' containing
+  // the raw data from `v'.  Null terminates the result as well,
+  // since many functions such as `execve' expect null-terminated
+  // arrays.  The caller takes ownership of the array.
   char** get_raw_array(const std::vector<std::string>& v);
 
   // Wraps around the corresponding syscalls and returns the program's
