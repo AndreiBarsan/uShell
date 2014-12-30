@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "builtin_registry.h"
 #include "command.h"
 #include "shell.h"
 #include "util.h"

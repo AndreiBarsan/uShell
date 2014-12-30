@@ -50,7 +50,8 @@ public:
   virtual string get_name() const = 0;
 };
 
-
+// The interface for a `TypedBuiltinFactory', which can construct a 
+// particular (typed) builtin using an argv.
 class BuiltinFactory {
   public:
     virtual BuiltinCommand* built(const vector<string>& ) = 0;
@@ -62,34 +63,6 @@ class TypedBuiltinFactory : public BuiltinFactory {
     BuiltinCommand* built(const vector<string>& argv) {
       return new B(argv);
     }
-};
-
-class BuiltinRegistry {
-public:
-  static BuiltinRegistry* instance() {
-    if(!_instance) {
-      _instance = new BuiltinRegistry;
-    }
-    return _instance;
-  }
-
-  template<typename B>
-  bool register_factory(const string& name, BuiltinFactory *factory) {
-    builtins[name] = factory;
-    return true;
-  }
-
-  bool is_registered(const string& builtin_name) {
-    return builtins.end() != builtins.find(builtin_name);
-  }
-
-  BuiltinCommand* build(const vector<string>& argv) {
-    return builtins[argv[0]]->built(argv);
-  }
-
-private:
-  static BuiltinRegistry* _instance;
-  map<string, BuiltinFactory*> builtins;
 };
 
 class ExitBuiltin : public BuiltinCommand {

@@ -17,6 +17,7 @@
 #include <sys/types.h> // maybe remove
 #include <sys/wait.h> // maybe remove
 
+#include "builtin_registry.h"
 #include "command.h"
 #include "shell.h"
 #include "util.h"
