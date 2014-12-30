@@ -69,6 +69,11 @@ int Shell::interactive() {
 string& Shell::get_working_directory() {
   return working_directory;
 }
+  
+void Shell::set_working_directory(const string& directory) {
+  util::setcwd(directory);
+  working_directory = directory;
+}
 
 string Shell::get_working_directory() const {
   return working_directory;
@@ -85,7 +90,7 @@ const Shell* Shell::eout(const string& message) const {
 }
 
 void Shell::output_prompt() {
-  this->standard_output << this->prompt;
+  this->standard_output << "(" << this->working_directory << ") " << this->prompt;
 }
 
 string Shell::read_command() {

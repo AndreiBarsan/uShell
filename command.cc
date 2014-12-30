@@ -76,8 +76,26 @@ int PwdBuiltin::invoke(Shell *shell) {
 }
 REGISTER_BUILTIN(PwdBuiltin, pwd);
 
-int CdBuiltin::invoke(Shell *) {
-  return 0;
+int CdBuiltin::invoke(Shell *shell) {
+  if(argv.size() > 1) {
+    string dir = argv[1];
+    // TODO(andrei) Centralized code to resolve path.
+    // Example: shell->resolve(path) 
+    // Figures out if path is relative or absolute, resolves ~, .. etc.
+    string full_path = util::merge_paths(shell->get_working_directory(), dir);
+    if(util::is_directory(full_path)) {
+      shell->set_working_directory(full_path);
+      return 1;
+    }
+    else {
+      shell->eout("cd: no such directory: " + dir);
+      return 0;
+    }
+  }
+  
+  // TODO(andrei) Proper tilde expansion and home folder lookup.
+  shell->set_working_directory("~");
+  return 1;  
 }
 REGISTER_BUILTIN(CdBuiltin, cd);
 

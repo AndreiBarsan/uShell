@@ -21,6 +21,7 @@ public:
   int interactive();
   string& get_working_directory();
   string get_working_directory() const;
+  void set_working_directory(const string& directory);
 
   const Shell* out(const string& message) const;
   const Shell* eout(const string& message) const;

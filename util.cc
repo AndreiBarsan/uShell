@@ -5,6 +5,7 @@
 #include <cstring>
 
 #include <linux/limits.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "util.h"
@@ -76,6 +77,33 @@ namespace util {
       return true;
     }
     
+    return false;
+  }
+
+  bool setcwd(const std::string& cwd) {
+    return 0 == ::chdir(cwd.c_str());
+  }
+
+  bool is_file(const string& name) {
+    struct stat stat_buf;
+    return 0 == stat(name.c_str(), &stat_buf);
+  }
+
+  bool is_regular_file(const std::string& name) {
+    struct stat stat_buf;
+    if(0 == stat(name.c_str(), &stat_buf)) {
+      return S_ISREG(stat_buf.st_mode);
+    }
+
+    return false;
+  }
+
+  bool is_directory(const std::string& name) {
+    struct stat stat_buf;
+    if(0 == stat(name.c_str(), &stat_buf)) {
+      return S_ISDIR(stat_buf.st_mode);
+    }
+
     return false;
   }
 

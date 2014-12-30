@@ -10,6 +10,14 @@
 namespace microshell {
 namespace core {
 
+// TODO(andrei) Make sure this macro is appropriate.
+#define DECLARE_BUILTIN(name)                     \
+  class name##Builtin : public BuiltinCommand {   \
+    using BuiltinCommand::BuiltinCommand;         \
+    int invoke(Shell *shell);                     \
+    string get_name() cont { return #name }       \
+  };
+
 using namespace std;
 
 class Shell;
@@ -54,13 +62,13 @@ public:
 // particular (typed) builtin using an argv.
 class BuiltinFactory {
   public:
-    virtual BuiltinCommand* built(const vector<string>& ) = 0;
+    virtual BuiltinCommand* build(const vector<string>& ) = 0;
 };
 
 template<typename B>
 class TypedBuiltinFactory : public BuiltinFactory {
   public:
-    BuiltinCommand* built(const vector<string>& argv) {
+    BuiltinCommand* build(const vector<string>& argv) {
       return new B(argv);
     }
 };

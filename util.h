@@ -28,6 +28,11 @@ namespace util {
   // Wraps around the corresponding syscalls and returns the program's
   // current working directoty.
   bool getcwd(std::string *cwd);
+  bool setcwd(const std::string& cwd);
+
+  bool is_file(const std::string& name);
+  bool is_regular_file(const std::string& name);
+  bool is_directory(const std::string& name);
 
 }  // namespace util
 

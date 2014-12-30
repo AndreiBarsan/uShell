@@ -28,7 +28,7 @@ public:
   }
 
   BuiltinCommand* build(const vector<string>& argv) {
-    return builtins[argv[0]]->built(argv);
+    return builtins[argv[0]]->build(argv);
   }
 
 private:
