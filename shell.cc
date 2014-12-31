@@ -28,16 +28,19 @@ namespace core {
 using namespace std;
 
 Shell::Shell(const vector<string> &) :
+    home_directory(util::get_current_home()),
     standard_output(cout),
     error_output(cerr),
-    name("ush") {
+    name("ush"),
+    username(util::get_current_user()) {
   exit_requested = false;
-  cout << "Welcome to microshell!" << endl;
+  cout << "Welcome to microshell, " << username << "!" << endl;
   if(!util::getcwd(&this->working_directory)) {
     eout("Failed to get the current working directory.");
     eout("Defaulting to `~'.");
     this->working_directory = "~";
   }
+
   string envpath = getenv("PATH");
   this->path = util::split(envpath, ':');
 }
@@ -65,6 +68,23 @@ int Shell::interactive() {
 
   return 0;
 } 
+  
+string Shell::resolve_path(const string& path) {
+  if(util::is_absolute_path(path)) {
+    return path;
+  }
+
+  // The VFS can handle the `..' sequences, but we want to handle them
+  // ourselves in order to display the path in a clearer way.
+  
+  if(0 == path.find("~/")) {
+    cout << "HOME path" << endl;
+    string rest = path.substr(2);
+    return util::merge_paths(home_directory, rest);
+  }
+
+  return util::merge_paths(working_directory, path);
+}
 
 string& Shell::get_working_directory() {
   return working_directory;

@@ -5,7 +5,9 @@
 #include <cstring>
 
 #include <linux/limits.h>
+#include <pwd.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "util.h"
@@ -62,7 +64,7 @@ namespace util {
   char** get_raw_array(const std::vector<std::string>& v) {
     char** ret = new char*[v.size() + 1];
     for(size_t i = 0; i < v.size(); ++i) {
-      ret[i] = strdup(v[i].c_str());
+      ret[i] = ::strdup(v[i].c_str());
     }
     ret[v.size()] = nullptr;
     return ret;
@@ -86,12 +88,12 @@ namespace util {
 
   bool is_file(const string& name) {
     struct stat stat_buf;
-    return 0 == stat(name.c_str(), &stat_buf);
+    return 0 == ::stat(name.c_str(), &stat_buf);
   }
 
   bool is_regular_file(const std::string& name) {
     struct stat stat_buf;
-    if(0 == stat(name.c_str(), &stat_buf)) {
+    if(0 == ::stat(name.c_str(), &stat_buf)) {
       return S_ISREG(stat_buf.st_mode);
     }
 
@@ -100,11 +102,27 @@ namespace util {
 
   bool is_directory(const std::string& name) {
     struct stat stat_buf;
-    if(0 == stat(name.c_str(), &stat_buf)) {
+    if(0 == ::stat(name.c_str(), &stat_buf)) {
       return S_ISDIR(stat_buf.st_mode);
     }
 
     return false;
+  }
+
+  string get_current_home() {
+    char* home;
+    if(nullptr == (home = ::getenv("HOME"))) {
+      home = ::getpwuid(::getuid())->pw_dir;
+      return string(home);
+    }
+    else {
+      string ret(home);
+      return ret;
+    }
+  }
+
+  string get_current_user() {
+    return string(::getpwuid(::getuid())->pw_name);
   }
 
 }  // namespace util

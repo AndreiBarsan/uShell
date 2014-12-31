@@ -4,7 +4,10 @@
 #include <string>
 #include <vector>
 
+// TODO(andrei) Separate platform-independent from platform-dependent code.
 namespace util {
+  // Convenience method for converting an ugly (argc, argv) pair into
+  // a typesafe vector<string>.
   std::vector<std::string> argv_to_strvec(int count, char** argv);
 
   bool is_absolute_path(const std::string& path);
@@ -33,6 +36,9 @@ namespace util {
   bool is_file(const std::string& name);
   bool is_regular_file(const std::string& name);
   bool is_directory(const std::string& name);
+
+  std::string get_current_home();
+  std::string get_current_user();
 
 }  // namespace util
 

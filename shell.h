@@ -19,6 +19,11 @@ public:
   Shell(const vector<string>& args);
 
   int interactive();
+
+  // Given `path', resolve it based on the current working directory.
+  // Supports tilde expansion, 
+  string resolve_path(const string& path);
+
   string& get_working_directory();
   string get_working_directory() const;
   void set_working_directory(const string& directory);
@@ -52,12 +57,17 @@ private:
 
   // The current working directory of the shell.
   string working_directory;
+  // The home directory of the active user.
+  string home_directory;
 
   // The streams used by the shell instance to output all text.
   ostream& standard_output;
   ostream& error_output;
 
+  // The shell's name.
   string name;
+  // The current user's name.
+  string username;
 };
 
 }  // namespace core
