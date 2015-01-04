@@ -20,14 +20,18 @@ public:
 
   int interactive();
 
+  // Perform various expansions (tilde, variable (dollar), dollar-brace etc.).
+  // Currently performs just tilde expansion.
+  string expand(const string& param) const;
+
   // Given `path', resolve it based on the current working directory.
-  // Supports tilde expansion, 
-  string resolve_path(const string& path);
+  string resolve_path(const string& path) const;
 
   string& get_working_directory();
   string get_working_directory() const;
   void set_working_directory(const string& directory);
 
+  // TODO(andrei) Might be cleaner to replace these with ostream&.
   const Shell* out(const string& message) const;
   const Shell* eout(const string& message) const;
 
@@ -40,13 +44,13 @@ protected:
 
   bool parse_command(const string& command_text,
                                     Command **command,
-                                    string *error);
+                                    string *error) const;
 
-  bool resolve_binary_name(const string& name, string* full_path);
+  bool resolve_binary_name(const string& name, string* full_path) const;
 
-  bool is_builtin(const string& builtin_name);
+  bool is_builtin(const string& builtin_name) const;
 
-  BuiltinCommand* construct_builtin(const vector<string>& argv);
+  BuiltinCommand* construct_builtin(const vector<string>& argv) const;
   
 private:
   bool exit_requested; 

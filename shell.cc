@@ -67,9 +67,20 @@ int Shell::interactive() {
   }
 
   return 0;
-} 
+}
+
+string Shell::expand(const string& param) const { 
+  // TODO(andrei) Variable expansions happen first.
   
-string Shell::resolve_path(const string& path) {
+  if(0 == param.find("~")) {
+    string rest = param.substr(1);
+    return util::merge_paths(home_directory, rest);
+  }
+
+  return param;
+}
+  
+string Shell::resolve_path(const string& path) const {
   if(util::is_absolute_path(path)) {
     return path;
   }
@@ -77,12 +88,6 @@ string Shell::resolve_path(const string& path) {
   // The VFS can handle the `..' sequences, but we want to handle them
   // ourselves in order to display the path in a clearer way.
   
-  if(0 == path.find("~/")) {
-    cout << "HOME path" << endl;
-    string rest = path.substr(2);
-    return util::merge_paths(home_directory, rest);
-  }
-
   return util::merge_paths(working_directory, path);
 }
 
@@ -110,7 +115,8 @@ const Shell* Shell::eout(const string& message) const {
 }
 
 void Shell::output_prompt() {
-  this->standard_output << "(" << this->working_directory << ") " << this->prompt;
+  this->standard_output << "(" << this->working_directory << ") " 
+    << "\033[1;31m" <<  this->prompt << "\033[0m";
 }
 
 string Shell::read_command() {
@@ -136,20 +142,33 @@ int Shell::interpret_command(Command &cmd) {
 
 bool Shell::parse_command(const string& command_text,
                                   Command **command,
-                                  string *error) {
+                                  string *error) const {
   // TODO(andrei) YACC this.
+  // TODO(andrei) Do we really want a customizable IFS variable?
   vector<string> argv = util::split(command_text, ' ');
 
-  // TODO(andrei) Tilde expand here.
-  // TODO(andrei) Dollar(-brace) expand here.
+  // Perform expansion for every parameter.
+  for(string& arg : argv) {
+    arg = expand(arg);
+  }
+
+  const string& program_name = argv[0];
 
   if(is_builtin(argv[0])) {
     *command = construct_builtin(argv);
   }
   else {
-    string full_path;
-    if(resolve_binary_name(argv[0], &full_path)) {
-      argv[0] = full_path;
+    // If the path actually points to a directory, we want to catch that.
+    string full_path = resolve_path(program_name);
+    if (util::is_directory(full_path)) {
+      // TODO(andrei) zsh-like auto-cd functionality could go here.
+      *error = "Cannot execute [" + argv[0] + "]. It's a directory.";
+      return false;
+    }
+
+    string binary_path;
+    if(resolve_binary_name(argv[0], &binary_path)) {
+      argv[0] = binary_path;
       *command = new DiskCommand(argv);
     } else {
       *error = "Command not found: [" + argv[0] + "]";
@@ -157,13 +176,10 @@ bool Shell::parse_command(const string& command_text,
     }
   }
 
-  *error = "";
   return true;
 }
 
-bool Shell::resolve_binary_name(const string& name, string* full_path) {
-  // PLATFORM_SPECIFIC
-  struct stat stat_buf;
+bool Shell::resolve_binary_name(const string& name, string* full_path) const {
   // No lookup needed for absolute paths.
   if(util::is_absolute_path(name)) {
     *full_path = name;
@@ -173,16 +189,16 @@ bool Shell::resolve_binary_name(const string& name, string* full_path) {
   // Search in our current directory.
   {
     string path = util::merge_paths(working_directory, name);
-    if(0 == stat(path.c_str(), &stat_buf)) {
+    if(util::is_file(path)) {
       *full_path = path;
       return true;
     }
   }
   
   // Search the PATH.
-  for(const string& p : path) {
+  for(const string& p : this->path) {
     string path = util::merge_paths(p, name);
-    if(0 == stat(path.c_str(), &stat_buf)) {
+    if(util::is_file(path)) {
       *full_path = path;
       return true;
     }
@@ -191,11 +207,11 @@ bool Shell::resolve_binary_name(const string& name, string* full_path) {
   return false;
 }
 
-bool Shell::is_builtin(const string& builtin_name) {
+bool Shell::is_builtin(const string& builtin_name) const {
   return BuiltinRegistry::instance()->is_registered(builtin_name);
 }
 
-BuiltinCommand* Shell::construct_builtin(const vector<string>& argv) {
+BuiltinCommand* Shell::construct_builtin(const vector<string>& argv) const {
   return BuiltinRegistry::instance()->build(argv);
 }
 
