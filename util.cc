@@ -5,7 +5,7 @@
 
 #include <cstring>
 
-#include <linux/limits.h>
+#include <limits.h>
 #include <pwd.h>
 #include <sys/stat.h>
 #include <sys/types.h>

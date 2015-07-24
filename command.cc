@@ -22,7 +22,7 @@ namespace core {
 using namespace std;
 
 int DiskCommand::invoke(Shell *shell) {
-  string comma_args = 
+  string comma_args =
     util::merge_with(argv.begin() + 1, argv.end(), ", ");
   shell->out("Invoking program [" + argv[0] + "] with args [" +
               comma_args + "]");
@@ -38,10 +38,10 @@ int DiskCommand::invoke(Shell *shell) {
     this->handle_child(shell);
     // No return, the child will just 'exec' or 'exit' (on error).
   }
-  
+
   return this->handle_parent(shell, child_pid);
 }
-  
+
 int DiskCommand::handle_parent(Shell *shell, pid_t child_pid) {
   shell->out("Spawned child. Waiting for child to terminate.");
   int child_status;
@@ -53,8 +53,9 @@ int DiskCommand::handle_parent(Shell *shell, pid_t child_pid) {
 
 void DiskCommand::handle_child(Shell *shell) {
   char **argv = util::get_raw_array(this->argv);
-  // 'environ' is inherited from the parent.
-  char **parent_env = environ;
+  // TODO(andrei) Pass environment to child, while ensuring no shenanigans can
+  // take place (no Shellshock risk).
+  char **parent_env = nullptr; //environ;
   execve(argv[0], argv, parent_env);
   // 'execve' doesn't return if it's successful.
   shell->eout("Failed to 'execve'. OS says [" + string(strerror(errno))
@@ -80,7 +81,7 @@ int CdBuiltin::invoke(Shell *shell) {
   if(argv.size() > 1) {
     string dir = argv[1];
     // TODO(andrei) Centralized code to resolve path.
-    // Example: shell->resolve(path) 
+    // Example: shell->resolve(path)
     // Figures out if path is relative or absolute, resolves ~, .. etc.
     string full_path = util::merge_paths(shell->get_working_directory(), dir);
     if(util::is_directory(full_path)) {
@@ -92,10 +93,10 @@ int CdBuiltin::invoke(Shell *shell) {
       return 0;
     }
   }
-  
+
   // TODO(andrei) Proper tilde expansion and home folder lookup.
   shell->set_working_directory("~");
-  return 1;  
+  return 1;
 }
 REGISTER_BUILTIN(CdBuiltin, cd);
 

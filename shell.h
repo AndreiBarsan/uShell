@@ -51,9 +51,9 @@ protected:
   bool is_builtin(const string& builtin_name) const;
 
   BuiltinCommand* construct_builtin(const vector<string>& argv) const;
-  
+
 private:
-  bool exit_requested; 
+  bool exit_requested;
   string prompt = "ush >> ";
 
   // The list of folders found inside the PATH environment variable.
