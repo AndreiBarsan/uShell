@@ -1,4 +1,4 @@
-// C++
+// C++ includes
 #include <iostream>
 #include <map>
 #include <memory>
@@ -47,7 +47,6 @@ Shell::Shell(const vector<string> &) :
 
 int Shell::interactive() {
   while (!exit_requested) {
-    output_prompt();
     string command_text = read_command();
     if(0 == command_text.length()) {
       cout << endl;
@@ -69,9 +68,9 @@ int Shell::interactive() {
   return 0;
 }
 
-string Shell::expand(const string& param) const { 
+string Shell::expand(const string& param) const {
   // TODO(andrei) Variable expansions happen first.
-  
+
   if(0 == param.find("~")) {
     string rest = param.substr(1);
     return util::merge_paths(home_directory, rest);
@@ -79,7 +78,7 @@ string Shell::expand(const string& param) const {
 
   return param;
 }
-  
+
 string Shell::resolve_path(const string& path) const {
   if(util::is_absolute_path(path)) {
     return path;
@@ -87,14 +86,14 @@ string Shell::resolve_path(const string& path) const {
 
   // The VFS can handle the `..' sequences, but we want to handle them
   // ourselves in order to display the path in a clearer way.
-  
+
   return util::merge_paths(working_directory, path);
 }
 
 string& Shell::get_working_directory() {
   return working_directory;
 }
-  
+
 void Shell::set_working_directory(const string& directory) {
   util::setcwd(directory);
   working_directory = directory;
@@ -114,15 +113,13 @@ const Shell* Shell::eout(const string& message) const {
   return this;
 }
 
-void Shell::output_prompt() {
-  this->standard_output << "(" << this->working_directory << ") " 
-    << "\033[1;31m" <<  this->prompt << "\033[0m";
+string Shell::get_prompt() const {
+  return "(" + this->working_directory + ") " + this->prompt;
 }
 
 string Shell::read_command() {
-  // We have already output our prompt at this point.
-  char* line = readline("");
-  
+  char* line = readline(get_prompt().c_str());
+
   // This happens if e.g. the user enters an EOF character (C-D).
   // Bash/zsh simply terminate in this case, even if they're interactive.
   // Should we do the same?
@@ -194,7 +191,7 @@ bool Shell::resolve_binary_name(const string& name, string* full_path) const {
       return true;
     }
   }
-  
+
   // Search the PATH.
   for(const string& p : this->path) {
     string path = util::merge_paths(p, name);

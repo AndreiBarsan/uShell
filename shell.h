@@ -36,7 +36,7 @@ public:
   const Shell* eout(const string& message) const;
 
 protected:
-  void output_prompt();
+  string get_prompt() const;
 
   string read_command();
 
