@@ -12,11 +12,13 @@ namespace microshell {
 namespace core {
 
 // TODO(andrei) Make sure this macro is appropriate.
-#define DECLARE_BUILTIN(name)                     \
-  class name##Builtin : public BuiltinCommand {   \
-    using BuiltinCommand::BuiltinCommand;         \
-    int invoke(Shell *shell);                     \
-    string get_name() cont { return #name }       \
+#define DECLARE_BUILTIN(name)                                                 \
+  class name##Builtin : public BuiltinCommand {                               \
+  public:                                                                     \
+    using BuiltinCommand::BuiltinCommand;                                     \
+    name##Builtin(const name##Builtin* other) : name##Builtin(*other) { };    \
+    virtual int invoke(Shell *shell) override;                                \
+    string get_name() const override { return "#name"; }                      \
   };
 
 using namespace std;
@@ -75,13 +77,7 @@ class TypedBuiltinFactory : public BuiltinFactory {
     }
 };
 
-class ExitBuiltin : public BuiltinCommand {
-  public:
-    using BuiltinCommand::BuiltinCommand;
-    ExitBuiltin(const ExitBuiltin* other) : ExitBuiltin(*other) { };
-    int invoke(Shell *shell);
-    string get_name() const { return "exit"; }
-};
+DECLARE_BUILTIN(Exit);
 
 class PwdBuiltin : public BuiltinCommand {
   public:
