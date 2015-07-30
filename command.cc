@@ -66,8 +66,8 @@ void DiskCommand::handle_child(Shell *shell) {
 
 int ExitBuiltin::invoke(Shell *shell) {
   shell->out("Bye!");
-  exit(0);
-  return -1;
+  shell->exit();
+  return 0;
 }
 REGISTER_BUILTIN(ExitBuiltin, exit);
 
@@ -101,7 +101,6 @@ int CdBuiltin::invoke(Shell *shell) {
 REGISTER_BUILTIN(CdBuiltin, cd);
 
 BuiltinRegistry* BuiltinRegistry::_instance = nullptr;
-
 
 }  // namespace core
 }  // namespace microshell

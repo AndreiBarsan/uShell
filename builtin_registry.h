@@ -27,7 +27,7 @@ public:
     return builtins.end() != builtins.find(builtin_name);
   }
 
-  BuiltinCommand* build(const vector<string>& argv) {
+  shared_ptr<BuiltinCommand> build(const vector<string>& argv) {
     return builtins[argv[0]]->build(argv);
   }
 

@@ -35,6 +35,9 @@ public:
   const Shell* out(const string& message) const;
   const Shell* eout(const string& message) const;
 
+  // Clean up and terminate the shell program.
+  void exit();
+
 protected:
   string get_prompt() const;
 
@@ -43,14 +46,14 @@ protected:
   int interpret_command(Command &cmd);
 
   bool parse_command(const string& command_text,
-                                    Command **command,
-                                    string *error) const;
+                     shared_ptr<Command> &command,
+                     string *error) const;
 
   bool resolve_binary_name(const string& name, string* full_path) const;
 
   bool is_builtin(const string& builtin_name) const;
 
-  BuiltinCommand* construct_builtin(const vector<string>& argv) const;
+  shared_ptr<BuiltinCommand> construct_builtin(const vector<string>& argv) const;
 
 private:
   bool exit_requested;

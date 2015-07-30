@@ -53,16 +53,14 @@ int Shell::interactive() {
       continue;
     }
 
-    Command *command = nullptr;
+    shared_ptr<Command> command;
     string error;
-    if(parse_command(command_text, &command, &error)) {
+    if(parse_command(command_text, command, &error)) {
       interpret_command(*command);
     }
     else {
       eout(error);
     }
-
-    delete command;
   }
 
   return 0;
@@ -113,6 +111,14 @@ const Shell* Shell::eout(const string& message) const {
   return this;
 }
 
+void Shell::exit() {
+  // This way, the shell gets a chance to shut down in a clean fashion without
+  // having to call `exit()'.
+  // TODO(andrei) Test that nothing else is ever run after `exit_requested' is
+  // set, no matter where.
+  this->exit_requested = true;
+}
+
 string Shell::get_prompt() const {
   return "(" + this->working_directory + ") " + this->prompt;
 }
@@ -138,10 +144,10 @@ int Shell::interpret_command(Command &cmd) {
 }
 
 bool Shell::parse_command(const string& command_text,
-                                  Command **command,
-                                  string *error) const {
+                          shared_ptr<Command> &commandManaged,
+                          string *error) const {
   // TODO(andrei) YACC this.
-  // TODO(andrei) Do we really want a customizable IFS variable?
+  // TODO(andrei) Customizable IFS variable?
   vector<string> argv = util::split(command_text, ' ');
 
   // Perform expansion for every parameter.
@@ -152,7 +158,7 @@ bool Shell::parse_command(const string& command_text,
   const string& program_name = argv[0];
 
   if(is_builtin(argv[0])) {
-    *command = construct_builtin(argv);
+    commandManaged = construct_builtin(argv);
   }
   else {
     // If the path actually points to a directory, we want to catch that.
@@ -166,7 +172,7 @@ bool Shell::parse_command(const string& command_text,
     string binary_path;
     if(resolve_binary_name(argv[0], &binary_path)) {
       argv[0] = binary_path;
-      *command = new DiskCommand(argv);
+      commandManaged = make_shared<DiskCommand>(new DiskCommand(argv));
     } else {
       *error = "Command not found: [" + argv[0] + "]";
       return false;
@@ -208,7 +214,7 @@ bool Shell::is_builtin(const string& builtin_name) const {
   return BuiltinRegistry::instance()->is_registered(builtin_name);
 }
 
-BuiltinCommand* Shell::construct_builtin(const vector<string>& argv) const {
+shared_ptr<BuiltinCommand> Shell::construct_builtin(const vector<string>& argv) const {
   return BuiltinRegistry::instance()->build(argv);
 }
 

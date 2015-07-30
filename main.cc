@@ -8,6 +8,13 @@
 #include "util.h"
 #include "shell.h"
 
+// TODO(andre) This belongs in a specific shell component.
+#include <stdio.h>
+#include <execinfo.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 // This project uses Google's C++ Style Guide.
 // See: http://google-styleguide.googlecode.com/svn/trunk/cppguide.html
 
@@ -49,8 +56,22 @@
  *    - figure out streamlined way to perform e2e testing
  */
 
+void handler(int sig) {
+  void *array[10];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, 10);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "Error: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(1);
+}
+
 int main(int argc, char **argv) {
-    microshell::core::Shell shell(util::argv_to_strvec(argc, argv));
-    int result = shell.interactive();
-    return result;
+  signal(SIGSEGV, handler);
+  microshell::core::Shell shell(util::argv_to_strvec(argc, argv));
+  int result = shell.interactive();
+  return result;
 }

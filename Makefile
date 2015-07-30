@@ -3,6 +3,7 @@ BIN=bin
 
 OPTS+='-std=c++11'
 OPTS+='-Wall'
+OPTS+='-g'
 
 UTIL_CC=hello.cc
 SHELL_CC=$(filter-out $(UTIL_CC), $(wildcard *.cc))

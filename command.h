@@ -1,6 +1,7 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
+#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
@@ -40,11 +41,12 @@ protected:
   vector<string> argv;
 };
 
-// Upon invocation, performs a fork and exec in order to
-// run 'argv' (see `SimpleCommand').
+// Upon invocation, performs a fork and exec in order to run 'argv' (see
+// `SimpleCommand').
 class DiskCommand : public SimpleCommand {
 public:
   using SimpleCommand::SimpleCommand;
+  DiskCommand(const DiskCommand* other) : DiskCommand(*other) { };
   int invoke(Shell *shell);
 
 private:
@@ -58,24 +60,25 @@ public:
   virtual string get_name() const = 0;
 };
 
-// The interface for a `TypedBuiltinFactory', which can construct a 
-// particular (typed) builtin using an argv.
+// The interface for a `TypedBuiltinFactory', which can construct a particular
+// (typed) builtin using an argv.
 class BuiltinFactory {
   public:
-    virtual BuiltinCommand* build(const vector<string>& ) = 0;
+    virtual shared_ptr<BuiltinCommand> build(const vector<string>& argv) = 0;
 };
 
-template<typename B>
+template<class BUILTIN>
 class TypedBuiltinFactory : public BuiltinFactory {
   public:
-    BuiltinCommand* build(const vector<string>& argv) {
-      return new B(argv);
+    shared_ptr<BuiltinCommand> build(const vector<string>& argv) {
+      return make_shared<BUILTIN>(new BUILTIN(argv));
     }
 };
 
 class ExitBuiltin : public BuiltinCommand {
   public:
     using BuiltinCommand::BuiltinCommand;
+    ExitBuiltin(const ExitBuiltin* other) : ExitBuiltin(*other) { };
     int invoke(Shell *shell);
     string get_name() const { return "exit"; }
 };
@@ -83,6 +86,7 @@ class ExitBuiltin : public BuiltinCommand {
 class PwdBuiltin : public BuiltinCommand {
   public:
     using BuiltinCommand::BuiltinCommand;
+    PwdBuiltin(const PwdBuiltin* other) : PwdBuiltin(*other) { };
     int invoke(Shell *shell);
     string get_name() const { return "pwd"; }
 };
@@ -90,6 +94,7 @@ class PwdBuiltin : public BuiltinCommand {
 class CdBuiltin : public BuiltinCommand {
   public:
     using BuiltinCommand::BuiltinCommand;
+    CdBuiltin(const CdBuiltin* other) : CdBuiltin(*other) { };
     int invoke(Shell *shell);
     string get_name() const { return "cd"; }
 };
