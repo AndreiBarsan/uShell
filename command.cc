@@ -57,7 +57,7 @@ void DiskCommand::handle_child(Shell *shell) {
   // take place (no Shellshock risk).
   char **parent_env = nullptr; //environ;
   execve(argv[0], argv, parent_env);
-  // 'execve' doesn't return if it's successful.
+  // Note: 'execve' doesn't return if it's successful.
   shell->eout("Failed to 'execve'. OS says [" + string(strerror(errno))
                + "]. errno = " + to_string(errno));
   shell->eout("Terminating child.");

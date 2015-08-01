@@ -11,7 +11,9 @@
 namespace microshell {
 namespace core {
 
-// TODO(andrei) Make sure this macro is appropriate.
+// TODO(andrei) Make sure this macro is appropriate.  Perhaps using a default
+// ``coreutils''-like module with all the basic builtins (e.g. `cd', `ls',
+// etc.) might make more sense.
 #define DECLARE_BUILTIN(name)                                                 \
   class name##Builtin : public BuiltinCommand {                               \
   public:                                                                     \

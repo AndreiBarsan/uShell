@@ -154,7 +154,7 @@ int Shell::interpret_command(Command &cmd) {
 }
 
 bool Shell::parse_command(const string& command_text,
-                          shared_ptr<Command> &commandManaged,
+                          shared_ptr<Command> &command,
                           string *error) const {
   // TODO(andrei) YACC this.
   // TODO(andrei) Customizable IFS variable?
@@ -168,7 +168,7 @@ bool Shell::parse_command(const string& command_text,
   const string& program_name = argv[0];
 
   if(is_builtin(argv[0])) {
-    commandManaged = construct_builtin(argv);
+    command = construct_builtin(argv);
   }
   else {
     // If the path actually points to a directory, we want to catch that.
@@ -182,7 +182,7 @@ bool Shell::parse_command(const string& command_text,
     string binary_path;
     if(resolve_binary_name(argv[0], &binary_path)) {
       argv[0] = binary_path;
-      commandManaged = make_shared<DiskCommand>(new DiskCommand(argv));
+      command = make_shared<DiskCommand>(new DiskCommand(argv));
     } else {
       *error = "Command not found: [" + argv[0] + "]";
       return false;
