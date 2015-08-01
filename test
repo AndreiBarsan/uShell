@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+shellBinary="bin/ushell"
+
+index=0
+e2eTest () {
+  local name="$1"
+  local input="$2"
+  local expected="$3"
+
+  (( index+=1 ))
+
+  output=$(echo -e "$input" >&1 | "$shellBinary")
+
+  if ! [ "$output" == "$expected" ]; then
+    echo "[$index] $name: FAIL"
+    echo "The real output:"
+    echo "$output"
+    echo $'\tdid not equal the expected output:'
+    echo "$expected"
+    echo
+  else
+    echo "[$index] $name: PASS"
+  fi
+}
+
+buildOutput () {
+  echo "Welcome to microshell, $USER"'!'
+  while [[ "$#" -gt 0 ]]; do
+    echo "$1"
+    shift
+  done
+  echo "ush: Bye!"
+}
+
+echo "Building µShell..."
+make shell
+
+echo "Running µShell end-to-end tests..."
+
+expectedBasicExit=$(buildOutput)
+e2eTest "Basic exit behavior" "exit" "$expectedBasicExit"
+expectedPwdBuiltin=$(buildOutput $(pwd))
+e2eTest "pwd builtin" $'pwd\nexit' "$expectedPwdBuiltin"
+
