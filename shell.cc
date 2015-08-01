@@ -27,6 +27,8 @@ namespace core {
 
 using namespace std;
 
+const int SHELL_FATAL = -1;
+
 Shell::Shell(const vector<string> &) :
     home_directory(util::get_current_home()),
     standard_output(cout),
@@ -111,7 +113,15 @@ const Shell* Shell::eout(const string& message) const {
   return this;
 }
 
+void Shell::fatal(const string& message) {
+  this->eout(message);
+  ::exit(SHELL_FATAL);
+}
+
 void Shell::exit() {
+  if(this->exit_requested) {
+    this->fatal("Requested exit twice.");
+  }
   // This way, the shell gets a chance to shut down in a clean fashion without
   // having to call `exit()'.
   // TODO(andrei) Test that nothing else is ever run after `exit_requested' is

@@ -32,8 +32,11 @@ public:
   void set_working_directory(const string& directory);
 
   // TODO(andrei) Might be cleaner to replace these with ostream&.
+  // TODO(andrei) These two functions modify the output streams which belong to
+  // the shell.  Should they still be marked `const'?
   const Shell* out(const string& message) const;
   const Shell* eout(const string& message) const;
+  void fatal(const string& message);
 
   // Clean up and terminate the shell program.
   void exit();
