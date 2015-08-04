@@ -8,6 +8,8 @@
 
 #include <sys/types.h>
 
+#include "builtin_factory.h"
+
 namespace microshell {
 namespace core {
 
@@ -15,14 +17,15 @@ namespace core {
 // ``coreutils''-like module with all the basic builtins (e.g. `cd', `ls',
 // etc.) might make more sense.
 #define DECLARE_BUILTIN(name)                                                 \
-  class name##Builtin : public BuiltinCommand {                               \
+  class name##Builtin : public microshell::core::BuiltinCommand {             \
   public:                                                                     \
-    using BuiltinCommand::BuiltinCommand;                                     \
+    using microshell::core::BuiltinCommand::BuiltinCommand;                   \
     name##Builtin(const name##Builtin* other) : name##Builtin(*other) { };    \
-    virtual int invoke(Shell *shell) override;                                \
-    string get_name() const override { return "#name"; }                      \
+    virtual int invoke(microshell::core::Shell *shell) override;              \
+    std::string get_name() const override { return "#name"; }                 \
   };
 
+// TODO(andrei) Remove this.
 using namespace std;
 
 class Shell;
@@ -62,21 +65,6 @@ class BuiltinCommand : public SimpleCommand {
 public:
   using SimpleCommand::SimpleCommand;
   virtual string get_name() const = 0;
-};
-
-// The interface for a `TypedBuiltinFactory', which can construct a particular
-// (typed) builtin using an argv.
-class BuiltinFactory {
-  public:
-    virtual shared_ptr<BuiltinCommand> build(const vector<string>& argv) = 0;
-};
-
-template<class BUILTIN>
-class TypedBuiltinFactory : public BuiltinFactory {
-  public:
-    shared_ptr<BuiltinCommand> build(const vector<string>& argv) {
-      return make_shared<BUILTIN>(new BUILTIN(argv));
-    }
 };
 
 DECLARE_BUILTIN(Exit);

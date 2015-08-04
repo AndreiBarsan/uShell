@@ -6,9 +6,11 @@
 
 #include "command.h"
 #include "shell.h"
+#include "shell_module.h"
 #include "util.h"
 
 namespace microshell {
+namespace modules {
 namespace job_control {
 
   /**
@@ -26,9 +28,10 @@ namespace job_control {
    *    - killall
    */
   class JobControl : public microshell::core::ShellModule {
-  }
+  };
 
 }   // namespace job_control
+}   // namespace modules
 }   // namespace microshell
 
 #endif  // JOB_CONTROL_H

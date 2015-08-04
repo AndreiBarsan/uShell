@@ -30,16 +30,19 @@ using namespace std;
 const int SHELL_FATAL = -1;
 
 Shell::Shell(const vector<string> &) :
+    exit_requested(false),
     home_directory(util::get_current_home()),
     standard_output(cout),
     error_output(cerr),
     name("ush"),
     username(util::get_current_user()) {
-  exit_requested = false;
   cout << "Welcome to microshell, " << username << "!" << endl;
   if(!util::getcwd(&this->working_directory)) {
     eout("Failed to get the current working directory.");
+    // TODO(andrei) Display what `~' resolves to between parentheses.  If it
+    // can't be resolved, use `/' instead.
     eout("Defaulting to `~'.");
+    // TODO(andrei) Use setter and actually resolve $HOME.
     this->working_directory = "~";
   }
 
