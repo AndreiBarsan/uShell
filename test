@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 
+# Utility colored print functions.
+pass () {
+  echo $'[ \033[00;32mPASS\033[0m ]' "$@"
+}
+
+fail () {
+  echo $'[ \033[0;31mFAIL\033[0m ]' "$@"
+}
+
+printIndented () {
+  IFS=$'\n'
+  for line in $1; do
+    echo $'\t' "$line"
+  done
+}
+
 shellBinary="bin/ushell"
 
 index=0
@@ -10,17 +26,17 @@ e2eTest () {
 
   (( index+=1 ))
 
-  output=$(echo -e "$input" >&1 | "$shellBinary")
+  output=$(echo -e "$input" | "$shellBinary" 2>&1)
 
   if ! [ "$output" == "$expected" ]; then
-    echo "[$index] $name: FAIL"
+    fail "[$index] $name"
     echo "The real output:"
-    echo "$output"
-    echo $'\tdid not equal the expected output:'
-    echo "$expected"
+    printIndented "$output"
+    echo "did not equal the expected output:"
+    printIndented "$expected"
     echo
   else
-    echo "[$index] $name: PASS"
+    pass "[$index] $name"
   fi
 }
 
@@ -38,8 +54,11 @@ make shell
 
 echo "Running µShell end-to-end tests..."
 
+# TODO(andrei) Remove redundant 'exit' calls as soon as the shell can detect
+# EOF characters.
 expectedBasicExit=$(buildOutput)
 e2eTest "Basic exit behavior" "exit" "$expectedBasicExit"
 expectedPwdBuiltin=$(buildOutput $(pwd))
 e2eTest "pwd builtin" $'pwd\nexit' "$expectedPwdBuiltin"
-
+expectedMooBuiltin=$(buildOutput moo)
+e2eTest "module-provided builtin \"moo\"" $'moo\nexit' "$expectedMooBuiltin"
