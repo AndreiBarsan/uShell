@@ -18,7 +18,7 @@ void SampleModule::initialize(const Shell&) {
 vector<shared_ptr<BuiltinFactory>> SampleModule::get_builtins() {
   return vector<shared_ptr<BuiltinFactory>> {
     make_shared<TypedBuiltinFactory<MooBuiltin>>(
-      TypedBuiltinFactory<MooBuiltin>()
+      TypedBuiltinFactory<MooBuiltin>("moo")
     )
   };
 }

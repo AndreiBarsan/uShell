@@ -13,9 +13,10 @@
 #include "shell.h"
 #include "util.h"
 
+// TODO(andrei) This should be obsolete (replaced with modules).
 #define REGISTER_BUILTIN(TYPE, name) \
   bool is_registered_##name = BuiltinRegistry::instance() \
-        ->register_factory<TYPE>(#name, std::make_shared<TypedBuiltinFactory< TYPE >>(TypedBuiltinFactory< TYPE >()));
+        ->register_factory<TYPE>(#name, std::make_shared<TypedBuiltinFactory< TYPE >>(TypedBuiltinFactory< TYPE >( "#name" )));
 
 namespace microshell {
 namespace core {

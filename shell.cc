@@ -19,6 +19,7 @@
 
 #include "builtin_registry.h"
 #include "command.h"
+#include "job_control.h"
 #include "sample_module.h"
 #include "shell.h"
 #include "util.h"
@@ -159,7 +160,7 @@ int Shell::load_module(shared_ptr<MODULE_TYPE> module) {
     // TODO(andrei) Use managed memory in builtin registry.
     // TODO(andrei) Builtin factories should know the builtin's name.
     BuiltinRegistry::instance()->register_factory<MODULE_TYPE>(
-      "moo", *bf
+      (*bf)->get_name(), *bf
     );
   }
   loaded_modules.push_back(module);
@@ -268,6 +269,9 @@ shared_ptr<BuiltinCommand> Shell::construct_builtin(const vector<string>& argv) 
 int Shell::load_default_modules() {
   this->load_module(
     make_shared<sample_module::SampleModule>(sample_module::SampleModule())
+  );
+  this->load_module(
+    make_shared<job_control::JobControl>(job_control::JobControl())
   );
   return 0;
 }
