@@ -35,11 +35,17 @@ public:
   string get_working_directory() const;
   void set_working_directory(const string& directory);
 
-  // TODO(andrei) Might be cleaner to replace these with ostream&.
-  // TODO(andrei) These two functions modify the output streams which belong to
-  // the shell.  Should they still be marked `const'?
-  const Shell* out(const string& message) const;
-  const Shell* eout(const string& message) const;
+  // TODO(andrei) Might be cleaner to replace these with ostream& directly.
+  // TODO(andrei) Clear separation between logging and output.
+
+  // Output functions
+  const Shell* out(const string& message);
+  const Shell* eout(const string& message);
+
+  // Logging functions
+  const Shell* info(const string& message);
+  const Shell* warning(const string& message);
+  const Shell* error(const string& message);
   void fatal(const string& message);
 
   // Clean up and signal that we want to terminate the shell program.  Doesn't

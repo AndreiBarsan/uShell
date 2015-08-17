@@ -46,7 +46,7 @@ buildOutput () {
     echo "$1"
     shift
   done
-  echo "ush: Bye!"
+  echo "Bye!"
 }
 
 echo "Building µShell..."

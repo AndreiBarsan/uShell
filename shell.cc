@@ -109,18 +109,33 @@ string Shell::get_working_directory() const {
   return working_directory;
 }
 
-const Shell* Shell::out(const string& message) const {
-  this->standard_output << this->name << ": " << message << endl;
+const Shell* Shell::out(const string& message) {
+  this->standard_output << message << endl;
   return this;
 }
 
-const Shell* Shell::eout(const string& message) const {
-  this->error_output << this->name << ": " << message << endl;
+const Shell* Shell::eout(const string& message) {
+  this->error_output << message << endl;
+  return this;
+}
+
+const Shell* Shell::info(const string& message) {
+  this->out(this->name + ": " + message);
+  return this;
+}
+
+const Shell* Shell::warning(const string& message) {
+  this->out(this->name + " (warning): " + message);
+  return this;
+}
+
+const Shell* Shell::error(const string& message) {
+  this->eout(this->name + " (error): " + message);
   return this;
 }
 
 void Shell::fatal(const string& message) {
-  this->eout(message);
+  this->eout("FATAL: " + message);
   ::exit(SHELL_FATAL);
 }
 
@@ -128,6 +143,7 @@ void Shell::exit() {
   if(this->exit_requested) {
     this->fatal("Requested exit twice.");
   }
+
   // This way, the shell gets a chance to shut down in a clean fashion without
   // having to call `exit()'.
   // TODO(andrei) Test that nothing else is ever run after `exit_requested' is

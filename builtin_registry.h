@@ -29,7 +29,6 @@ public:
   }
 
   shared_ptr<BuiltinCommand> build(const vector<string>& argv) {
-    cout << "Builtins: " << argv[0] << " " << builtins[argv[0]] << endl;
     return builtins[argv[0]]->build(argv);
   }
 
