@@ -50,7 +50,7 @@ buildOutput () {
 }
 
 echo "Building µShell..."
-make shell
+make shell || fail "Build failed."
 
 echo "Running µShell end-to-end tests..."
 

@@ -28,6 +28,8 @@ namespace job_control {
    *    - killall
    */
   class JobControl : public microshell::core::ShellModule {
+    void initialize(const microshell::core::Shell&) override;
+    std::vector<std::shared_ptr<microshell::core::BuiltinFactory>> get_builtins() override;
   };
 
 }   // namespace job_control

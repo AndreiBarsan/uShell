@@ -9,25 +9,25 @@ namespace microshell {
 namespace modules {
 namespace sample_module {
 
-  using namespace microshell::core;
-  using namespace std;
+using namespace microshell::core;
+using namespace std;
 
-  void SampleModule::initialize(const Shell& shell) {
-    //shell.out("Initalized sample module.");
-  }
+void SampleModule::initialize(const Shell&) {
+}
 
-  vector<shared_ptr<BuiltinFactory>> SampleModule::get_builtins() {
-    return vector<shared_ptr<BuiltinFactory>> {
-      make_shared<TypedBuiltinFactory<MooBuiltin>>(
-        TypedBuiltinFactory<MooBuiltin>()
-      )
-    };
-  }
+vector<shared_ptr<BuiltinFactory>> SampleModule::get_builtins() {
+  return vector<shared_ptr<BuiltinFactory>> {
+    make_shared<TypedBuiltinFactory<MooBuiltin>>(
+      TypedBuiltinFactory<MooBuiltin>()
+    )
+  };
+}
 
-  int MooBuiltin::invoke(Shell *shell) {
-    shell->out("Moo!");
-    return 0;
-  }
+int MooBuiltin::invoke(Shell *shell) {
+  shell->out("Moo!");
+  return 0;
+}
+
 }   // namespace sample_module
 }   // namespace modules
 }   // namespace microshell
