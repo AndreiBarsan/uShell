@@ -3,10 +3,12 @@
 
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string>
 
 #include "command.h"
 #include "shell.h"
+#include "shell_module.h"
 #include "util.h"
 
 namespace microshell {
@@ -18,6 +20,8 @@ class Shell {
 public:
   Shell(const vector<string>& args);
 
+  // Run in REPL mode--display a prompt, read a command, run it, and repeat
+  // until the shell terminates.
   int interactive();
 
   // Perform various expansions (tilde, variable (dollar), dollar-brace etc.).
@@ -38,8 +42,16 @@ public:
   const Shell* eout(const string& message) const;
   void fatal(const string& message);
 
-  // Clean up and terminate the shell program.
+  // Clean up and signal that we want to terminate the shell program.  Doesn't
+  // exit immediately, in order to allow the shell to clean up after itself.
   void exit();
+
+  // Load the specified module and register it (e.g. its hooks or provided
+  // commands) in the shell.
+  //
+  // Returns 0 on success and an error code on failure.
+  template<class MODULE_TYPE>
+  int load_module(shared_ptr<MODULE_TYPE> module);
 
 protected:
   string get_prompt() const;
@@ -60,24 +72,31 @@ protected:
 
 private:
   bool exit_requested;
-  string prompt = "ush >> ";
+  std::string prompt = "ush >> ";
 
   // The list of folders found inside the PATH environment variable.
-  vector<string> path;
+  std::vector<std::string> path;
 
   // The current working directory of the shell.
-  string working_directory;
+  std::string working_directory;
   // The home directory of the active user.
-  string home_directory;
+  std::string home_directory;
 
   // The streams used by the shell instance to output all text.
-  ostream& standard_output;
-  ostream& error_output;
+  std::ostream& standard_output;
+  std::ostream& error_output;
 
   // The shell's name.
-  string name;
+  std::string name;
   // The current user's name.
-  string username;
+  std::string username;
+
+  std::vector<std::shared_ptr<ShellModule>> loaded_modules;
+
+  // This method initializes the shell's core modules (e.g. job control).
+  //
+  // Returns 0 on success and a nonzero error code on failure.
+  int load_default_modules();
 };
 
 }  // namespace core

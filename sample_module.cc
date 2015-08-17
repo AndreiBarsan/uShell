@@ -13,7 +13,7 @@ namespace sample_module {
   using namespace std;
 
   void SampleModule::initialize(const Shell& shell) {
-    shell.out("Initalized sample module.");
+    //shell.out("Initalized sample module.");
   }
 
   vector<shared_ptr<BuiltinFactory>> SampleModule::get_builtins() {
@@ -25,10 +25,9 @@ namespace sample_module {
   }
 
   int MooBuiltin::invoke(Shell *shell) {
-    shell->out("MOO!");
+    shell->out("Moo!");
     return 0;
   }
-
 }   // namespace sample_module
 }   // namespace modules
 }   // namespace microshell

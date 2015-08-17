@@ -1,4 +1,5 @@
 #include <string>
+#include <memory>
 #include <vector>
 
 #include <cstring>
@@ -14,7 +15,7 @@
 
 #define REGISTER_BUILTIN(TYPE, name) \
   bool is_registered_##name = BuiltinRegistry::instance() \
-        ->register_factory<TYPE>(#name, new TypedBuiltinFactory< TYPE >);
+        ->register_factory<TYPE>(#name, std::make_shared<TypedBuiltinFactory< TYPE >>(TypedBuiltinFactory< TYPE >()));
 
 namespace microshell {
 namespace core {

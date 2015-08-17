@@ -1,4 +1,5 @@
 #include <map>
+#include <memory>
 #include <string>
 
 #include "command.h"
@@ -18,7 +19,7 @@ public:
   }
 
   template<typename B>
-  bool register_factory(const string& name, BuiltinFactory *factory) {
+  bool register_factory(const string& name, shared_ptr<BuiltinFactory> factory) {
     builtins[name] = factory;
     return true;
   }
@@ -28,12 +29,13 @@ public:
   }
 
   shared_ptr<BuiltinCommand> build(const vector<string>& argv) {
+    cout << "Builtins: " << argv[0] << " " << builtins[argv[0]] << endl;
     return builtins[argv[0]]->build(argv);
   }
 
 private:
   static BuiltinRegistry* _instance;
-  map<string, BuiltinFactory*> builtins;
+  map<string, shared_ptr<BuiltinFactory>> builtins;
 };
 
 }  // namespace core

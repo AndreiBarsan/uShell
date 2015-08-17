@@ -12,6 +12,7 @@ namespace microshell {
 namespace modules {
 namespace sample_module {
   class SampleModule : public microshell::core::ShellModule {
+  public:
     void initialize(const microshell::core::Shell&) override;
     std::vector<std::shared_ptr<microshell::core::BuiltinFactory>> get_builtins() override;
   };

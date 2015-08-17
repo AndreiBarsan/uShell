@@ -19,6 +19,7 @@
 
 #include "builtin_registry.h"
 #include "command.h"
+#include "sample_module.h"
 #include "shell.h"
 #include "util.h"
 
@@ -26,6 +27,7 @@ namespace microshell {
 namespace core {
 
 using namespace std;
+using namespace microshell::modules;
 
 const int SHELL_FATAL = -1;
 
@@ -36,6 +38,7 @@ Shell::Shell(const vector<string> &) :
     error_output(cerr),
     name("ush"),
     username(util::get_current_user()) {
+  this->load_default_modules();
   cout << "Welcome to microshell, " << username << "!" << endl;
   if(!util::getcwd(&this->working_directory)) {
     eout("Failed to get the current working directory.");
@@ -132,6 +135,21 @@ void Shell::exit() {
   this->exit_requested = true;
 }
 
+template<class MODULE_TYPE>
+int Shell::load_module(shared_ptr<MODULE_TYPE> module) {
+  module->initialize(*this);
+  auto builtins = module->get_builtins();
+  for(auto bf = builtins.begin(); bf != builtins.end(); ++bf) {
+    // TODO(andrei) Use managed memory in builtin registry.
+    // TODO(andrei) Builtin factories should know the builtin's name.
+    BuiltinRegistry::instance()->register_factory<MODULE_TYPE>(
+      "moo", *bf
+    );
+  }
+  loaded_modules.push_back(module);
+  return 0;
+}
+
 string Shell::get_prompt() const {
   return "(" + this->working_directory + ") " + this->prompt;
 }
@@ -160,7 +178,7 @@ bool Shell::parse_command(const string& command_text,
                           shared_ptr<Command> &command,
                           string *error) const {
   // TODO(andrei) YACC this.
-  // TODO(andrei) Customizable IFS variable?
+  // TODO(andrei) Customizable IFS variable.
   vector<string> argv = util::split(command_text, ' ');
 
   // Perform expansion for every parameter.
@@ -229,6 +247,13 @@ bool Shell::is_builtin(const string& builtin_name) const {
 
 shared_ptr<BuiltinCommand> Shell::construct_builtin(const vector<string>& argv) const {
   return BuiltinRegistry::instance()->build(argv);
+}
+
+int Shell::load_default_modules() {
+  this->load_module(
+    make_shared<sample_module::SampleModule>(sample_module::SampleModule())
+  );
+  return 0;
 }
 
 }  // namespace core

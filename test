@@ -60,5 +60,5 @@ expectedBasicExit=$(buildOutput)
 e2eTest "Basic exit behavior" "exit" "$expectedBasicExit"
 expectedPwdBuiltin=$(buildOutput $(pwd))
 e2eTest "pwd builtin" $'pwd\nexit' "$expectedPwdBuiltin"
-expectedMooBuiltin=$(buildOutput moo)
+expectedMooBuiltin=$(buildOutput 'Moo!')
 e2eTest "module-provided builtin \"moo\"" $'moo\nexit' "$expectedMooBuiltin"

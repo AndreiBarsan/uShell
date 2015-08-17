@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -16,11 +17,11 @@ namespace core {
 // TODO(andrei) Make sure this macro is appropriate.  Perhaps using a default
 // ``coreutils''-like module with all the basic builtins (e.g. `cd', `ls',
 // etc.) might make more sense.
+//name##Builtin(const name##Builtin* other) : name##Builtin(*other) { };
 #define DECLARE_BUILTIN(name)                                                 \
   class name##Builtin : public microshell::core::BuiltinCommand {             \
   public:                                                                     \
     using microshell::core::BuiltinCommand::BuiltinCommand;                   \
-    name##Builtin(const name##Builtin* other) : name##Builtin(*other) { };    \
     virtual int invoke(microshell::core::Shell *shell) override;              \
     std::string get_name() const override { return "#name"; }                 \
   };
