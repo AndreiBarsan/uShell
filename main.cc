@@ -23,12 +23,13 @@
  *  - setup hotkeys for proper code navigation using YCM
  *  - auto-format code (vim + git hook)
  *  - fully qualified names for include guards (doesn't C++14 already have
- *  ``#pragma once''?)
+ *  ``#pragma once''? plz.)
  *  - auto-header for every file (e.g. license, copyright, etc.)
  *  - everything should have a proper interface and a dedicated implementation
  *  - make sure that code handling shell debug traps, pipes, variable handling
  *  etc.  is as clean as possible
- *  - yacc should work to generate the grammar like in the regular Bash
+ *  - setup process groups correctly when e.g. forking
+ *  - bison should work to generate the grammar like in the regular Bash
  *  - always bear in mind that plugins will have to be able to change anything
  *  - consider blogging about progress
  *  - document self about all variants of redirection in Bash and ensure that

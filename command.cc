@@ -27,6 +27,7 @@ using namespace std;
 void handle_sigchld(int signo) {
   Shell *shell = Shell::get();
   shell->info("Got SIGCHLD.");
+  cout << "SIGCHLD!!" << endl;
 }
 
 int DiskCommand::invoke(Shell *shell) {
@@ -34,6 +35,7 @@ int DiskCommand::invoke(Shell *shell) {
     util::merge_with(argv.begin() + 1, argv.end(), ", ");
   shell->out("Invoking program [" + argv[0] + "] with args [" +
               comma_args + "]");
+  //signal(SIGCHLD, handle_sigchld);
   pid_t child_pid = fork();
   if(-1 == child_pid) {
     // TODO(andrei) Shell::perror().

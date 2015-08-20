@@ -46,7 +46,7 @@ void handle_sigint(int signo) {
     shell->fatal("Signal mismatch.  Expecting SIGINT, got " + to_string(signo));
   }
 
-  if (shell->get_waiting_for_child()) {
+  if(shell->get_waiting_for_child()) {
     shell->info("C-c while child was running.");
   }
   else {
@@ -54,6 +54,25 @@ void handle_sigint(int signo) {
     // TODO(andrei) Ensure that we synchronize properly.
     shell->exit();
   }
+}
+
+void handle_sigtstp(int signo) {
+  Shell *shell = Shell::get();
+
+  if(SIGTSTP != signo) {
+    shell->fatal(
+      "Signal mismatch.  Expecting SIGTSTP, got " +
+      string(strsignal(signo)) +
+      "."
+    );
+  }
+
+  if(shell->get_waiting_for_child()) {
+    shell->info("Suspending foreground job.  Use `fg' to continue it in the "
+        "foreground, or `bg' to continue it in the background.");
+  }
+
+  // Otherwise, we just ignore the signal.
 }
 
 Shell::Shell(const vector<string> &) :
@@ -80,7 +99,10 @@ Shell::Shell(const vector<string> &) :
 
   this->info("Setting up signal handlers...");
   if(SIG_ERR == signal(SIGINT, handle_sigint)) {
-    this->fatal("Could not set up sigint handler (C-c terminate support).");
+    this->fatal("Could not set up SIGINT handler (C-c terminate support).");
+  }
+  if(SIG_ERR == signal(SIGTSTP, handle_sigtstp)) {
+    this->fatal("Could not set up SIGTSTP handler (C-z suspend support).");
   }
 }
 
@@ -202,7 +224,7 @@ string Shell::get_prompt() const {
 }
 
 string Shell::read_command() {
-  char *line = readline(get_prompt().c_str());
+  unique_ptr<char> line(readline(get_prompt().c_str()));
 
   // This happens if e.g. the user enters an EOF character (C-D).
   if(!line) {
@@ -210,11 +232,10 @@ string Shell::read_command() {
     return "";
   }
 
-  string command(line);
+  string command(line.get());
   if(command.size() > 0) {
-    add_history(line);
+    add_history(line.get());
   }
-  free(line);
   return command;
 }
 
@@ -317,13 +338,18 @@ bool Shell::get_waiting_for_child() const {
 int Shell::wait_child(int child_pid) {
   int child_status;
   int child_exit_code = -1;
-  int waitpid_options = 0;//WEXITED | WSTOPPED;
+  int waitpid_options = WUNTRACED;
 
   this->waiting_for_child = true;
   // TODO(andrei) Consider using wait4 and logging rusage data.
   while(true) {
-    if(!waitpid(child_pid, &child_status, waitpid_options)) {
-      this->fatal("Waitpid returned 0.");
+    pid_t ret = waitpid(child_pid, &child_status, waitpid_options);
+    if(-1 == ret) {
+      this->error(strerror(errno));
+      this->fatal("`waitpid' has encountered a fatal error.");
+    }
+    if(0 == ret) {
+      this->fatal("waitpid should not return 0");
     }
     this->info("Woken up!");
 
@@ -334,8 +360,7 @@ int Shell::wait_child(int child_pid) {
       );
       break;
     }
-
-    if(WIFSIGNALED(child_status)) {
+    else if(WIFSIGNALED(child_status)) {
       int child_murdering_signal = WTERMSIG(child_status);
       this->info(strsignal(child_murdering_signal));
       this->info(
@@ -343,15 +368,16 @@ int Shell::wait_child(int child_pid) {
       );
       break;
     }
-
-    if(WIFSTOPPED(child_status)) {
+    else if(WIFSTOPPED(child_status)) {
       int child_stopper = WSTOPSIG(child_status);
       this->info(strsignal(child_stopper));
       this->info("Child stopped by signal " + to_string(child_stopper) + ".");
       break;
     }
+    else {
+      this->fatal("Unexpected child process state. Terminating.");
+    }
   }
-  signal(SIGCHLD, SIG_IGN);
   this->waiting_for_child = false;
 
   // TODO(andrei) This is broken on killed/suspended children.
