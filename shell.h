@@ -18,7 +18,19 @@ using namespace std;
 
 class Shell {
 public:
-  Shell(const vector<string>& args);
+  static Shell* initialize(const vector<string>& args) {
+    Shell::instance = new Shell(args);
+    return Shell::instance;
+  }
+
+  static Shell* get() {
+    if (nullptr == Shell::instance) {
+      cerr << "Tried to access shell before initialization." << endl;
+      ::exit(-1);
+    }
+
+    return Shell::instance;
+  }
 
   // Run in REPL mode--display a prompt, read a command, run it, and repeat
   // until the shell terminates.
@@ -59,7 +71,14 @@ public:
   template<class MODULE_TYPE>
   int load_module(shared_ptr<MODULE_TYPE> module);
 
+  bool get_waiting_for_child() const;
+
+  // Wait for the given child process to complete, and return its exit code.
+  int wait_child(int child_pid);
+
 protected:
+  Shell(const vector<string>& args);
+
   string get_prompt() const;
 
   string read_command();
@@ -77,6 +96,8 @@ protected:
   shared_ptr<BuiltinCommand> construct_builtin(const vector<string>& argv) const;
 
 private:
+  static Shell *instance;
+
   bool exit_requested;
   std::string prompt = "ush >> ";
 
@@ -103,6 +124,10 @@ private:
   //
   // Returns 0 on success and a nonzero error code on failure.
   int load_default_modules();
+
+  // TODO(andrei) Proper state management using e.g. an enum.
+  // Whether the shell is currently running a child process in the foreground.
+  bool waiting_for_child;
 };
 
 }  // namespace core

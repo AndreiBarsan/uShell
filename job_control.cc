@@ -1,4 +1,8 @@
 #include "job_control.h"
+
+#include <csignal>
+
+// Helper macro for instantiating builtin factories.
 #define _(name, type) (std::make_shared<TypedBuiltinFactory<type>>(TypedBuiltinFactory<type>(name)))
 
 namespace microshell {
@@ -8,10 +12,7 @@ namespace job_control {
 using namespace std;
 using namespace microshell::core;
 
-template<typename T>
-using TBF = TypedBuiltinFactory<T>;
-
-void JobControl::initialize(const microshell::core::Shell&) {
+void JobControl::initialize(const microshell::core::Shell& shell) {
 }
 
 vector<shared_ptr<BuiltinFactory>> JobControl::get_builtins() {

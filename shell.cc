@@ -8,14 +8,15 @@
 // C includes
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
 
-// Linux-specific
+// OS-specific
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <signal.h>
 #include <sys/stat.h>
-#include <sys/types.h> // maybe remove
-#include <sys/wait.h> // maybe remove
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "builtin_registry.h"
 #include "command.h"
@@ -32,13 +33,37 @@ using namespace microshell::modules;
 
 const int SHELL_FATAL = -1;
 
+// Singleton initialization.
+Shell* Shell::instance = nullptr;
+
+void handle_sigint(int signo) {
+  // TODO(andrei) This will be invalid for a brief moment between when this
+  // signal handler is set up and when the shell initialization finishes.
+  Shell *shell = Shell::get();
+
+  if(SIGINT != signo) {
+    // TODO(andrei) Signal2name.
+    shell->fatal("Signal mismatch.  Expecting SIGINT, got " + to_string(signo));
+  }
+
+  if (shell->get_waiting_for_child()) {
+    shell->info("C-c while child was running.");
+  }
+  else {
+    shell->info("C-c while NO child was running. Terminating shell.");
+    // TODO(andrei) Ensure that we synchronize properly.
+    shell->exit();
+  }
+}
+
 Shell::Shell(const vector<string> &) :
     exit_requested(false),
     home_directory(util::get_current_home()),
     standard_output(cout),
     error_output(cerr),
     name("ush"),
-    username(util::get_current_user()) {
+    username(util::get_current_user()),
+    waiting_for_child(false) {
   this->load_default_modules();
   cout << "Welcome to microshell, " << username << "!" << endl;
   if(!util::getcwd(&this->working_directory)) {
@@ -52,6 +77,11 @@ Shell::Shell(const vector<string> &) :
 
   string envpath = getenv("PATH");
   this->path = util::split(envpath, ':');
+
+  this->info("Setting up signal handlers...");
+  if(SIG_ERR == signal(SIGINT, handle_sigint)) {
+    this->fatal("Could not set up sigint handler (C-c terminate support).");
+  }
 }
 
 int Shell::interactive() {
@@ -172,7 +202,7 @@ string Shell::get_prompt() const {
 }
 
 string Shell::read_command() {
-  char* line = readline(get_prompt().c_str());
+  char *line = readline(get_prompt().c_str());
 
   // This happens if e.g. the user enters an EOF character (C-D).
   // Bash/zsh simply terminate in this case, even if they're interactive.
@@ -274,6 +304,57 @@ int Shell::load_default_modules() {
     make_shared<job_control::JobControl>(job_control::JobControl())
   );
   return 0;
+}
+
+bool Shell::get_waiting_for_child() const {
+  return this->waiting_for_child;
+}
+
+// TODO(andrei) Restructure this method.  In many cases a child may not have an
+// exit status, such as in the case when it is killed by a signal (9, force
+// kill or 11, out of memory).
+int Shell::wait_child(int child_pid) {
+  int child_status;
+  int child_exit_code = -1;
+  int waitpid_options = WEXITED | WSTOPPED;
+
+  this->waiting_for_child = true;
+  // TODO(andrei) Consider using wait4 and logging rusage data.
+  while(true) {
+    if(!waitpid(child_pid, &child_status, waitpid_options)) {
+      this->fatal("Waitpid returned 0.");
+    }
+    this->info("Woken up!");
+
+    if(WIFEXITED(child_status)) {
+      child_exit_code = WEXITSTATUS(child_status);
+      this->info(
+        "Child exited normally (exit code: " + to_string(child_exit_code) + ")."
+      );
+      break;
+    }
+
+    if(WIFSIGNALED(child_status)) {
+      int child_murdering_signal = WTERMSIG(child_status);
+      this->info(strsignal(child_murdering_signal));
+      this->info(
+        "Child killed by signal " + to_string(child_murdering_signal) + "."
+      );
+      break;
+    }
+
+    if(WIFSTOPPED(child_status)) {
+      int child_stopper = WSTOPSIG(child_status);
+      this->info(strsignal(child_stopper));
+      this->info("Child stopped by signal " + to_string(child_stopper) + ".");
+      break;
+    }
+  }
+  signal(SIGCHLD, SIG_IGN);
+  this->waiting_for_child = false;
+
+  // TODO(andrei) This is broken on killed/suspended children.
+  return child_status;
 }
 
 }  // namespace core

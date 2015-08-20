@@ -4,6 +4,7 @@
 
 #include <cstring>
 
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -22,6 +23,11 @@ namespace microshell {
 namespace core {
 
 using namespace std;
+
+void handle_sigchld(int signo) {
+  Shell *shell = Shell::get();
+  shell->info("Got SIGCHLD.");
+}
 
 int DiskCommand::invoke(Shell *shell) {
   string comma_args =
@@ -46,11 +52,7 @@ int DiskCommand::invoke(Shell *shell) {
 
 int DiskCommand::handle_parent(Shell *shell, pid_t child_pid) {
   shell->out("Spawned child. Waiting for child to terminate.");
-  int child_status;
-  int waitpid_options = 0;
-  waitpid(child_pid, &child_status, waitpid_options);
-  shell->out("Child has terminated. Exit code: " + to_string(child_status));
-  return child_status;
+  return shell->wait_child(child_pid);
 }
 
 void DiskCommand::handle_child(Shell *shell) {

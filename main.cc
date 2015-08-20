@@ -69,8 +69,9 @@ void handler(int sig) {
 }
 
 int main(int argc, char **argv) {
+  // Enable stack traces on crashes.
   signal(SIGSEGV, handler);
-  microshell::core::Shell shell(util::argv_to_strvec(argc, argv));
-  int result = shell.interactive();
-  return result;
+
+  microshell::core::Shell *shell = microshell::core::Shell::initialize(util::argv_to_strvec(argc, argv));
+  return shell->interactive();
 }
