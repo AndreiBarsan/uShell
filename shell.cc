@@ -205,9 +205,10 @@ string Shell::read_command() {
   char *line = readline(get_prompt().c_str());
 
   // This happens if e.g. the user enters an EOF character (C-D).
-  // Bash/zsh simply terminate in this case, even if they're interactive.
-  // Should we do the same?
-  if(!line) return "";
+  if(!line) {
+    this->exit();
+    return "";
+  }
 
   string command(line);
   if(command.size() > 0) {
@@ -316,7 +317,7 @@ bool Shell::get_waiting_for_child() const {
 int Shell::wait_child(int child_pid) {
   int child_status;
   int child_exit_code = -1;
-  int waitpid_options = WEXITED | WSTOPPED;
+  int waitpid_options = 0;//WEXITED | WSTOPPED;
 
   this->waiting_for_child = true;
   // TODO(andrei) Consider using wait4 and logging rusage data.
